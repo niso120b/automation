@@ -1,0 +1,53 @@
+---
+
+version: '2.0'
+
+create_instances:
+  type: direct
+  description: | 
+    Creating multiple virtual servers on openstack for services
+
+  input:
+    - names
+    - image_id
+    - flavor_id
+    - key_name: null
+    - security_groups: null
+    # Example: nics: [{"net-id": "27aa8c1c-d6b8-4474-b7f7-6cdcf63ac856"}]
+    - nics: null
+
+  task-defaults:
+    on-error:
+      - delete_servers
+
+  output:
+    vm_ids: <% $.vm_ids %>
+    vm_names: <% $.names %>
+
+  tasks:
+    create_servers:
+      with-items: name in <% $.names %>
+      description: Initial request to create a server.
+      action: nova.servers_create name=<% $.name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+      input:
+        key_name: <% $.key_name %>
+        security_groups: <% $.security_groups %>
+        nics: <% $.nics %>
+      publish:
+        vm_ids: <% task(create_servers).result.id %>
+      on-success:
+        - wait_servers_activate
+
+    wait_servers_activate:
+      with-items: vm_id in <% $.vm_ids %>
+      action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
+      retry:
+        delay: 10
+        count: <% $.vm_names.len() * 10 %>
+
+    delete_servers:
+      with-items: vm_id in <% $.vm_ids %>
+      description: Destroy servers
+      workflow: std.delete_instance instance_id=<% $.vm_id %>
+      on-complete:
+        - fail

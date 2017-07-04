@@ -1,0 +1,7 @@
+{
+    "names": ["vm1", "vm2"],
+    "image_id": "9b88a9b4-ff62-49ac-8959-3030946b4281",
+    "flavor_id": "2",
+    "security_groups": ["default"],
+    "nics": [{"net-id": "b8d8f748-0e5e-4f46-8fd4-c73b6e971ec4"}]
+}

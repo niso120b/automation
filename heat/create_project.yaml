@@ -1,0 +1,105 @@
+heat_template_version: 2013-05-23
+
+description: Create new project for new clients with networks and security groups.
+
+parameters:
+  project_name:
+    type: string
+    description: Keystone project name
+  project_description:
+    type: string
+    description: Keystone project description
+  project_enabled:
+    type: boolean
+    description: Keystone project is enabled or disabled
+  project_domain:
+    type: string
+    description: Keystone project domain name
+  public_net:
+    type: string
+    description: >
+      ID or name of public network for which floating IP addresses will be allocated
+  private_net_name:
+    type: string
+    description: Name of private network to be created
+  private_net_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+  private_net_gateway:
+    type: string
+    description: Private network gateway address
+  private_net_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+  private_net_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+  security_group_name:
+    type: string
+    description: Name of the security group
+  security_group_description:
+    type: string
+    description: Description of the security group
+
+resources:
+  client_project:
+    type: OS::Keystone::Project
+    properties:
+      name: {get_param: project_name}
+      domain: {get_param: project_domain}
+      description: {get_param: project_description}
+      enabled: {get_param: project_enabled}
+
+  private_net:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: private_net_name }
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net }
+      cidr: { get_param: private_net_cidr }
+      gateway_ip: { get_param: private_net_gateway }
+      allocation_pools:
+        - start: { get_param: private_net_pool_start }
+          end: { get_param: private_net_pool_end }
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: { get_param: public_net }
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet }
+
+    server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: { get_param: security_group_description }
+      name: { get_param: security_group_name }
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+
+outputs:
+  client_project_id:
+    value: {get_resource: client_project}
+  client_private_network:
+    value: { get_resource: private_net }

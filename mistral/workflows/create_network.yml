@@ -1,0 +1,59 @@
+---
+
+version: '2.0'
+
+create_network:
+  type: direct
+  description: | 
+    Creating new network for openstack project.
+
+  input:
+    - network_name
+    - network_admin_state_up # True or False
+    - subnet_name
+    - cidr 
+    - allocation_pools # [{"start": "10.0.3.20", "end": "10.0.3.150"}]
+    - router_name
+    - port_name
+
+  output:
+    network_id: <% $.network_id %>
+
+  tasks:
+    create_net:
+      description: Create new network
+      action: neutron.create_network  
+      input:
+        body: {"network": {"name": <% $.network_name %> ,"admin_state_up": <% $.network_admin_state_up %> }}
+      publish:
+        network_id: <% task(create_net).result.id %> 
+      on-success:
+        - create_subnet
+
+    create_subnet:
+      description: Create new subnet for the project network
+      action: neutron.create_subnet
+      input:
+        body: {"subnet": {"network_id": <% $.network_id %>,"ip_version": 4,"cidr": <% $.cidr %>,"allocation_pools": <% $.allocation_pools %>}}
+      publish:
+        subnet_id: <% task(create_subnet).result.id %> 
+      on-success:
+        - create_router
+    
+    create_router: 
+      description: Create new router for the project network
+      action: neutron.create_router
+      input:
+        body: {'router': {'name': <% $.router_name %>,'admin_state_up': True}}
+      publish:
+        router_id: <% task(create_router).result.id %> 
+      on-success:
+        - create_port
+
+     create_port:
+      description: Create new port and connect it to router
+      action: neutron.create_router
+      input:
+        body: {'port': {'admin_state_up': <% $.network_admin_state_up %>,'device_id': <% $.router_id %>,'name': <% $.port_name %>,'network_id': <% $.network_id %>}} 
+      publish:
+        subnet_id: <% task(create_port).result.id %>

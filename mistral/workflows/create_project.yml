@@ -1,0 +1,26 @@
+---
+
+version: '2.0'
+
+create_project:
+  type: direct
+  description: | 
+    Creating new project on openstack for new clients.
+
+  input:
+    - name
+    - domain
+
+  output:
+    project_id: <% $.project_id %>
+
+  tasks:
+    create_proj:
+      description: Create empty project.
+      action: keystone.projects_create  
+      input:
+        name: <% $.name %>
+        domain: <% $.domain %>
+        enabled: true
+      publish:
+        project_id: <% task(create_proj).result.id %> 

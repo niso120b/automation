@@ -1,0 +1,56 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Deploy x servers into an existing neutron tenant network and
+  connect to public network.
+
+parameters:
+  servers_name_prefix:
+    type: string
+    description: Prefix for the servers name
+  servers_number:
+    type: string
+    description: Number of servers
+  key_name:
+    type: string
+    description: Name of keypair to assign to servers
+  image:
+    type: string
+    description: Name of image to use for servers
+  flavor:
+    type: string
+    description: Flavor to use for servers
+  public_net_id:
+    type: string
+    description: >
+      ID of public network for which floating IP addresses will be allocated
+  private_net_id:
+    type: string
+    description: ID of private network into which servers get deployed
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which servers get deployed
+  security_group_id:
+    type: string
+    description: ID of the security group
+
+resources:
+  servers_group:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: servers_number }
+      resource_def:
+        type: resource_group_instance.yaml
+        properties:
+          name: { get_param: servers_name_prefix }0%index%
+          key_name: { get_param: key_name }
+          image: { get_param: image}
+          flavor: { get_param: flavor }
+          public_net_id: { get_param: public_net_id }
+          private_net_id: { get_param: private_net_id }
+          private_subnet_id: { get_param: private_subnet_id }
+          security_group_id: { get_param: security_group_id }
+
+outputs:
+  result_servers_group:
+    value: { get_resource: servers_group }
