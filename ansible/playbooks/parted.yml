@@ -1,0 +1,11 @@
+---
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    - hdds:
+      - /dev/vdc
+    - mounts:
+      - /mnt/
+  roles:
+    - parted

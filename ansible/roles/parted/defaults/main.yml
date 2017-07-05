@@ -1,0 +1,12 @@
+---
+
+parted_optimization: optimal
+create_label: true
+label: gpt
+
+hdds: []
+#- /dev/vdc
+mounts: []
+#- /mnt/
+partitions:
+- {'partition_type': 'primary', 'start_point': '0%', 'end_point': '100%'}

@@ -1,0 +1,44 @@
+---
+
+- name: "Adding MongoDB Repo"
+  yum_repository:
+    name: "{{ mongodb_repo_info.name }}"
+    description: "{{ mongodb_repo_info.description }}"
+    baseurl: "{{ mongodb_repo_info.baseurl }}"
+    gpgcheck: "{{ mongodb_repo_info.gpgcheck }}"
+    enabled: "{{ mongodb_repo_info.enabled }}"
+    gpgkey: "{{ mongodb_repo_info.gpgkey }}"
+    state: "present"
+
+- name: "Installing MongoDB"
+  yum:
+    name: "{{ item }}"
+    state: "present"
+  with_items:
+  - python-pip
+  - mongodb-org
+
+- name: "Ensuring MongoDB Is Enabled and Started"
+  service:
+    name: "mongod"
+    state: "started"
+    enabled: yes
+
+- name: "Installing Python Modules"
+  pip:
+    name: "pymongo"
+    state: "present"
+
+- name: "Create admin mongodb user and users"
+  include: users.yml
+  when: mongodb_create_users
+
+- name: "Configuring MongoDB"
+  template:
+    src: "etc/mongod.conf.j2"
+    dest: "{{ mongodb_config }}"
+  register: "mongodb_configured"
+  notify: "Restart MongoDB"
+
+- include: replication.yml
+  when: mongodb_replication
