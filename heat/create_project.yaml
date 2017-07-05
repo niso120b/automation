@@ -34,12 +34,9 @@ parameters:
   private_net_pool_end:
     type: string
     description: End of private network IP address allocation pool
-  security_group_name:
+  router_name:
     type: string
-    description: Name of the security group
-  security_group_description:
-    type: string
-    description: Description of the security group
+    description: Name of the router of the project
 
 resources:
   client_project:
@@ -54,6 +51,7 @@ resources:
     type: OS::Neutron::Net
     properties:
       name: { get_param: private_net_name }
+      tenant_id: { get_resource: client_project }
 
   private_subnet:
     type: OS::Neutron::Subnet
@@ -64,39 +62,22 @@ resources:
       allocation_pools:
         - start: { get_param: private_net_pool_start }
           end: { get_param: private_net_pool_end }
+      tenant_id: { get_resource: client_project }
 
   router:
     type: OS::Neutron::Router
     properties:
+      name: { get_param: router_name }
       external_gateway_info:
         network: { get_param: public_net }
+      value_specs:
+        tenant_id: { get_resource: client_project }
 
   router_interface:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource: router }
       subnet_id: { get_resource: private_subnet }
-
-    server_security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      description: { get_param: security_group_description }
-      name: { get_param: security_group_name }
-      rules:
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: tcp
-          port_range_min: 22
-          port_range_max: 22
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: icmp
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: tcp
-          port_range_min: 80
-          port_range_max: 80
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: tcp
-          port_range_min: 443
-          port_range_max: 443
 
 outputs:
   client_project_id:

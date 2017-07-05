@@ -3,6 +3,7 @@
 parted_optimization: optimal
 create_label: true
 label: gpt
+vg_name: "datavg"
 
 hdds: []
 #- /dev/vdc

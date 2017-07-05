@@ -45,8 +45,8 @@
 - name: "Master & Slave - Setting Permissions on replication keyfile"
   file:
     path: "{{ mongodb_replication_keyfile }}"
-    owner: "mongodb"
-    group: "nogroup"
+    owner: "mongod"
+    group: "mongod"
     mode: "u=r,g=,o="
 
 - name: "Master & Slave - Restarting MongoDB"

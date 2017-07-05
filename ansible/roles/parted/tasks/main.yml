@@ -6,30 +6,72 @@
     state: present
   with_items:
   - parted
+  - lvm2
 
 - name: "Create the label on disks"
-  shell: parted -s "{{ item }}" mklabel "{{ label }}"
+  parted:
+    device: "{{ item }}"
+    label: "{{ label }}"
   with_items:
   - "{{ hdds }}"
   when:
   - create_label
   - "{{ item|basename in hostvars[inventory_hostname]['ansible_devices'] }}"
 
+#- name: "Create the label on disks"
+#  shell: parted -s "{{ item }}" mklabel "{{ label }}"
+#  with_items:
+#  - "{{ hdds }}"
+#  when:
+#  - create_label
+#  - "{{ item|basename in hostvars[inventory_hostname]['ansible_devices'] }}"
+
 - name: "Create the partitions"
-  shell: parted -a "{{ parted_optimization }}" -s "{{ item.0 }}" mkpart "{{ item.1['partition_type'] }}" "{{ item.1['start_point'] }}" "{{ item.1['end_point'] }}"
+  parted:
+    align: "{{ parted_optimization }}"
+    device: "{{ item.0 }}"
+    part_type: "{{ item.1['partition_type'] }}"
+    part_start: "{{ item.1['start_point'] }}"
+    part_end: "{{ item.1['end_point'] }}"
+    flags: [ lvm ]
+    state: present
   with_nested:
   - "{{ hdds }}"
   - "{{ partitions }}"
   when:
   - "{{ item.0|basename in hostvars[inventory_hostname]['ansible_devices'] }}"
 
-- name: "Create the filesystems"
-  filesystem:
-    dev: "{{ item }}1"
-    fstype: xfs
-  with_items: "{{ hdds }}"
+- name: "create VG"
+  lvg:
+    pvs: "{{ item }}1"
+    vg: "{{ vg_name }}"
+  with_items:
+  - "{{ hdds }}"
   when:
   - "{{ item|basename in hostvars[inventory_hostname]['ansible_devices'] }}"
+
+- name: "Create LVs"
+  lvol:
+    lv: "{{ item }}"
+    vg: "{{ vg_name }}"
+    size: 100%FREE
+  with_items:
+    - "{{ lvs }}"
+
+#- name: "Create the partitions"
+#  shell: parted -a "{{ parted_optimization }}" -s "{{ item.0 }}" mkpart "{{ item.1['partition_type'] }}" "{{ item.1['start_point'] }}" "{{ item.1['end_point'] }}"
+#  with_nested:
+#  - "{{ hdds }}"
+#  - "{{ partitions }}"
+#  when:
+#  - "{{ item.0|basename in hostvars[inventory_hostname]['ansible_devices'] }}"
+
+- name: "Create the filesystems"
+  filesystem:
+    dev: "/dev/{{ vg_name }}/{{ item }}"
+    fstype: xfs
+  with_items:
+  - "{{ lvs }}"
 
 - name: "Mount filesystems to mounts list"
   mount:

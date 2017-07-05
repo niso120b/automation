@@ -1,0 +1,9 @@
+openstack stack create \
+--parameter project_name=nickgay --parameter project_description=nickgay \
+--parameter project_enabled=true --parameter project_domain=Default \
+--parameter public_net=public-net --parameter private_net_name=nickgay-net \
+--parameter private_net_cidr=10.0.3.0/24 --parameter private_net_gateway=10.0.3.254 \
+--parameter private_net_pool_start=10.0.3.50 --parameter private_net_pool_end=10.0.3.100 \
+--parameter router_name=nickgay-router --parameter security_group_name=nickgay-sg \
+--parameter security_group_description=nickgay-security-group \
+-t create_project.yaml stack1

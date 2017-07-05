@@ -42,7 +42,7 @@ resources:
       resource_def:
         type: resource_group_instance.yaml
         properties:
-          name: { get_param: servers_name_prefix }0%index%
+          name: { get_param: servers_name_prefix }%index%
           key_name: { get_param: key_name }
           image: { get_param: image}
           flavor: { get_param: flavor }

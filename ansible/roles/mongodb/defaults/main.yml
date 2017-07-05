@@ -15,7 +15,7 @@ mongodb_bind_ip:
 mongodb_config: '/etc/mongod.conf'
 
 # Defines the path to store MongoDB
-mongodb_dbPath: '/var/lib/mongodb'
+mongodb_dbPath: '/var/lib/mongo'
 
 # Defines the listen port for MongoDB
 mongodb_port: '27017'
