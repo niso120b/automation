@@ -7,5 +7,8 @@
       - /dev/vdc
     - mounts:
       - /mnt/
+    - lvs:
+      - data-lv
+    - vg_name: "datavg"
   roles:
     - parted

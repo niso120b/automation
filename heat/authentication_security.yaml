@@ -9,9 +9,6 @@ parameters:
   user_description:
     type: string
     description: Keystone user description
-  user_enabled:
-    type: boolean
-    description: Keystone user is enabled or disabled
   user_domain:
     type: string
     description: Keystone user domain name
@@ -21,21 +18,18 @@ parameters:
   user_password:
     type: string
     description: Keystone user password
-  user_default_project:
+  user_project:
     type: string
     description: Keystone user default project id
-  user_groups:
-    type: comma_delimited_list
-    description: Keystone groups, where this user is part of
+  group_name:
+    type: string
+    description: Keystone group name
+  group_description:
+    type: string
+    description: Keystone group description
   group_role:
     type: string
     description: role
-  group_role_domain:
-    type: string
-    description: group role domain
-  group_role_project:
-    type: string
-    description: group role project
   security_group_name:
     type: string
     description: Name of the security group
@@ -44,22 +38,35 @@ parameters:
     description: Description of the security group
 
 resources:
+  client_group:
+    type: OS::Keystone::Group
+    properties:
+      name: {get_param: group_name}
+      domain: {get_param: user_domain}
+      description: {get_param: group_description}
+      roles:
+        - role: {get_param: group_role}
+          domain: {get_param: user_domain}
+        - role: {get_param: group_role}
+          project: {get_param: user_project}
+
   client_user:
     type: OS::Keystone::User
     properties:
       name: {get_param: user_name}
       domain: {get_param: user_domain}
       description: {get_param: user_description}
-      enabled: {get_param: user_enabled}
+      enabled: true
       email: {get_param: user_email}
       password: {get_param: user_password}
-      default_project: {get_param: user_default_project}
-      groups: {get_param: user_groups}
+      default_project: {get_param: user_project}
+      groups:
+        - {get_resource: client_group}
       roles:
         - role: {get_param: group_role}
-          domain: {get_param: group_role_domain}
+          domain: {get_param: user_domain}
         - role: {get_param: group_role}
-          project: {get_param: group_role_project}
+          project: {get_param: user_project}
 
   server_security_group:
     type: OS::Neutron::SecurityGroup

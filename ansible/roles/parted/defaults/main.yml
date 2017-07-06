@@ -5,6 +5,8 @@ create_label: true
 label: gpt
 vg_name: "datavg"
 
+lvs: []
+#- data
 hdds: []
 #- /dev/vdc
 mounts: []

@@ -3,4 +3,4 @@
 - hosts: mongodb-nodes
   remote_user: root
   roles:
-    - mongodb
+    - enterprise-mongodb

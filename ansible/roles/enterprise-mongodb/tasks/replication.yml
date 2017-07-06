@@ -1,0 +1,23 @@
+---
+
+- name: "Master - Creating Replication Setup Script"
+  template:
+    src: "initrs.js.j2"
+    dest: "/tmp/initrs.js"
+  when: inventory_hostname == mongodb_replication_master
+
+- name: "Master - Initializing Replication Set"
+  command: 'mongo --port {{ mongodb_port }} -u "{{ mongodb_admin_user.name }}" -p "{{ mongodb_admin_user.password }}" --authenticationDatabase "admin" /tmp/repset_init.js'
+  register: "mongodb_repl_set_init"
+  when:
+  - inventory_hostname == mongodb_replication_master and
+  - mongodb_create_users
+  notify: "Restart MongoDB"
+
+- name: "Master - Initializing Replication Set when not creating mongodb users"
+  command: 'mongo --port {{ mongodb_port }} /tmp/repset_init.js'
+  register: "mongodb_repl_set_init"
+  when:
+  - inventory_hostname == mongodb_replication_master and
+  - not mongodb_create_users
+  notify: "Restart MongoDB"

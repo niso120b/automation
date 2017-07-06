@@ -21,8 +21,8 @@ net:
 replication:
   replSetName: {{ mongodb_replication_set }}
 
-#security:
-#  keyFile: {{ mongodb_replication_keyfile }}
+security:
+  keyFile: {{ mongodb_replication_keyfile }}
 {% endif %}
 
 #operationProfiling:

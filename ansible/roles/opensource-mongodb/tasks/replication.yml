@@ -51,7 +51,7 @@
 
 - name: "Master & Slave - Restarting MongoDB"
   service:
-    name: "mongodb"
+    name: "mongod"
     state: "restarted"
   when: mongodb_configured.changed
 
