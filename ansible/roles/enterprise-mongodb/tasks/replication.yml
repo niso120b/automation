@@ -4,10 +4,12 @@
   template:
     src: "initrs.js.j2"
     dest: "/tmp/initrs.js"
+    owner: mongod
+    group: mongod
   when: inventory_hostname == mongodb_replication_master
 
 - name: "Master - Initializing Replication Set"
-  command: 'mongo --port {{ mongodb_port }} -u "{{ mongodb_admin_user.name }}" -p "{{ mongodb_admin_user.password }}" --authenticationDatabase "admin" /tmp/repset_init.js'
+  command: 'mongo --port {{ mongodb_port }} -u "{{ mongodb_admin_user.name }}" -p "{{ mongodb_admin_user.password }}" --authenticationDatabase "admin" /tmp/initrs.js'
   register: "mongodb_repl_set_init"
   when:
   - inventory_hostname == mongodb_replication_master and
@@ -15,7 +17,7 @@
   notify: "Restart MongoDB"
 
 - name: "Master - Initializing Replication Set when not creating mongodb users"
-  command: 'mongo --port {{ mongodb_port }} /tmp/repset_init.js'
+  command: 'mongo --port {{ mongodb_port }} /tmp/initrs.js'
   register: "mongodb_repl_set_init"
   when:
   - inventory_hostname == mongodb_replication_master and

@@ -1,0 +1,9 @@
+Author: Nissim Bitan
+Description: Sample Keystone User template
+Format: Heat.HOT/1.0
+FullName: rn.tests.opentack.services.AuthenticationSecurity
+Name: Authentication Security
+Tags:
+- automation
+- heat
+Type: Application

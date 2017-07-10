@@ -48,7 +48,7 @@ resources:
     properties:
       count: { get_param: servers_number }
       resource_def:
-        type: resource_group_instance.yaml
+        type: Resources/resource_group_instance.yaml
         properties:
           name:
             str_replace:

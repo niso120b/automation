@@ -1,0 +1,9 @@
+Author: Nissim Bitan
+Description: Deploy HTTP apache server in cloud.
+Format: Heat.HOT/1.0
+FullName: rn.tests.opentack.services.DeployApache
+Name: Deploy apache
+Tags:
+- automation
+- heat
+Type: Application

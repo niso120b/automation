@@ -1,0 +1,104 @@
+heat_template_version: 2016-10-14
+
+description: >
+  Deploy 3 server into an existing neutron tenant network and
+  connect to public network.
+
+parameters:
+  server_name_1:
+    type: string
+    description: Name of the server 1
+  server_name_2:
+    type: string
+    description: Name of the server 2
+  server_name_3:
+    type: string
+    description: Name of the server 3
+  key_name:
+    type: string
+    description: Name of keypair to assign to server
+  image:
+    type: string
+    description: Name of image to use for server
+  flavor:
+    type: string
+    description: Flavor to use for server
+  public_net_id:
+    type: string
+    description: >
+      ID of public network for which floating IP addresses will be allocated
+  private_net_id:
+    type: string
+    description: ID of private network into which server get deployed
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which server get deployed
+  security_group_id:
+    type: string
+    description: ID of the security group
+
+resources:
+  instance1_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_param: security_group_id }]
+
+  instance1:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name_1}
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance1_port }
+
+  instance2_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_param: security_group_id }]
+
+  instance2:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name_2}
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance2_port }
+
+  instance3_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_param: security_group_id }]
+
+  instance3:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name_3}
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance3_port }
+
+outputs:
+  instance1_private_ip:
+    description: IP address of instance in network
+    value: { get_attr: [ instance1, first_address ] }
+  instance2_private_ip:
+    description: IP address of instance in network
+    value: { get_attr: [ instance2, first_address ] }
+  instance3_private_ip:
+    description: IP address of instance in network
+    value: { get_attr: [ instance3, first_address ] }

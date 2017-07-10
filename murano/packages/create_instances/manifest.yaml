@@ -1,0 +1,10 @@
+Author: Nissim Bitan
+Description: 'Deploy x servers into an existing neutron tenant network and connect
+  to public network.'
+Format: Heat.HOT/1.0
+FullName: rn.tests.opentack.services.CreateInstances
+Name: Create Instances
+Tags:
+- automation
+- heat
+Type: Application

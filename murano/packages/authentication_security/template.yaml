@@ -1,0 +1,94 @@
+heat_template_version: 2013-05-23
+
+description: Sample Keystone User template
+
+parameters:
+  user_name:
+    type: string
+    description: Keystone user name
+  user_description:
+    type: string
+    description: Keystone user description
+  user_domain:
+    type: string
+    description: Keystone user domain name
+  user_email:
+    type: string
+    description: Keystone user email
+  user_password:
+    type: string
+    description: Keystone user password
+  user_project:
+    type: string
+    description: Keystone user default project id
+  group_name:
+    type: string
+    description: Keystone group name
+  group_description:
+    type: string
+    description: Keystone group description
+  group_role:
+    type: string
+    description: role
+  security_group_name:
+    type: string
+    description: Name of the security group
+  security_group_description:
+    type: string
+    description: Description of the security group
+
+resources:
+  client_group:
+    type: OS::Keystone::Group
+    properties:
+      name: {get_param: group_name}
+      domain: {get_param: user_domain}
+      description: {get_param: group_description}
+      roles:
+        - role: {get_param: group_role}
+          domain: {get_param: user_domain}
+        - role: {get_param: group_role}
+          project: {get_param: user_project}
+
+  client_user:
+    type: OS::Keystone::User
+    properties:
+      name: {get_param: user_name}
+      domain: {get_param: user_domain}
+      description: {get_param: user_description}
+      enabled: true
+      email: {get_param: user_email}
+      password: {get_param: user_password}
+      default_project: {get_param: user_project}
+      groups:
+        - {get_resource: client_group}
+      roles:
+        - role: {get_param: group_role}
+          domain: {get_param: user_domain}
+        - role: {get_param: group_role}
+          project: {get_param: user_project}
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: security_group_name }
+      description: { get_param: security_group_description }
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+
+outputs:
+  client_user_id:
+    value: {get_resource: client_user}

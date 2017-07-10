@@ -31,14 +31,16 @@
 
 - name: "Configuring MongoDB"
   template:
-    src: "etc/mongod-start.conf.j2"
+    src: "etc/mongod.conf.j2"
     dest: "{{ mongodb_config }}"
     mode: 0640
+    owner: mongod
+    group: mongod
   notify: "Restart MongoDB"
 
 - name: "Wait connection to mongo port"
   wait_for:
-    host: 127.0.0.1
+    host: "{{ ansible_eth1.ipv4.address }}"
     port: 27017
     state: "started"
     delay: 5
