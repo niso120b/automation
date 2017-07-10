@@ -1,0 +1,54 @@
+conn = new Mongo();
+db = conn.getDB("admin");
+db.auth( '{{ mongodb_admin_user.name }}', '{{ mongodb_admin_user.password }}');
+
+config = {_id: '{{ mongodb_replication_set }}', members: [
+       {%- for host in groups[mongodb_replication_group -%}
+       {_id: {{ loop.index }}, host: '{{ host }}:{{ mongodb_port }}'}{% if not loop.last %},{% endif %}
+       {%- endfor -%}
+           ]};
+rs.initiate(config)
+sleep(30000)
+rs.slaveOk()
+printjson(rs.status())
+
+// Check that the cluster is ok
+if(!rs.status().ok) { throw 'Mongo Cluster Not Ok';}
+
+// Check that the cluster has the right number of members
+// and add them if we are the master
+if(rs.isMaster().ismaster) {
+    if(rs.status().members.length!={{ groups[mongodb_replication_group]|length }}) {
+        {% for host in groups[mongodb_replication_group] %}
+        rs.add({_id: {{ loop.index }}, host: '{{ host }}:{{ mongodb_port }}'});
+        {% endfor %}
+        sleep(30000);
+        // Check status and member account, throw exception if not
+        if(!rs.status().ok) { throw 'Mongo Cluster Not Ok';}
+        if(rs.status().members.length!={{ groups[mongodb_replication_group]|length }}) {
+            throw 'Could not add all members to cluster'
+        }
+    }
+    // Now add super user to cluster
+    conn = new Mongo();
+    db = conn.getDB("admin");
+    db.auth( '{{ mongodb_admin_user.name }}', '{{ mongodb_admin_user.password }}');
+
+    if(db.getUser("{{ mongodb_admin_user.name }}") == null) {
+        db.createUser(
+            {
+                "user": "{{ mongodb_admin_user.name }}",
+                "pwd": "{{ mongodb_admin_user.password }}",
+                "roles": ["root"]
+            }
+        );
+    } else {
+        db.updateUser(
+            "{{ mongodb_admin_user.name }}",
+            {
+                "pwd": "{{ mongodb_admin_user.password }}",
+                "roles": ["root"]
+            }
+        );
+    }
+}

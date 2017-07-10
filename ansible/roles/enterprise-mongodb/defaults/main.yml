@@ -73,7 +73,7 @@ mongodb_replication: true
 mongodb_replication_group: 'mongodb-nodes'
 
 # Defines the keyFile to setup replication if using authentication
-# mongodb_replication_keyfile: '{{ mongodb_dbPath }}/keyFile'
+mongodb_replication_keyfile: '{{ mongodb_dbPath }}/keyFile'
 
 # Defines the node which should be considered the replication master
 mongodb_replication_master: '{{ groups[mongodb_replication_group][0] }}'

@@ -16,6 +16,7 @@
     state: "present"
   with_items:
   - python-pip
+  - libselinux-python
   - mongodb-enterprise
 
 - name: "Ensuring MongoDB Is Enabled and Started"
@@ -29,6 +30,11 @@
     name: "pymongo"
     state: "present"
 
+- name: "Create the hosts file for all machines"
+  template:
+    src: "hosts.j2"
+    dest: "/etc/hosts"
+
 - name: "Configuring MongoDB"
   template:
     src: "etc/mongod.conf.j2"
@@ -38,17 +44,9 @@
     group: mongod
   notify: "Restart MongoDB"
 
-- name: "Wait connection to mongo port"
-  wait_for:
-    host: "{{ ansible_eth1.ipv4.address }}"
-    port: 27017
-    state: "started"
-    delay: 5
-  when: inventory_hostname == mongodb_replication_master
+- include: replication.yml
+  when: mongodb_replication
 
 - name: "Create admin mongodb user and users"
   include: users.yml
   when: mongodb_create_users
-
-- include: replication.yml
-  when: mongodb_replication
