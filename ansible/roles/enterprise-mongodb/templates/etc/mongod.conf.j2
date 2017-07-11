@@ -29,6 +29,10 @@ net:
   port: {{ mongodb_port }}
   bindIp: {{ mongodb_bind_ip|join (',') }}  # Listen to local interface only, comment to listen on all interfaces.
 
-
+{% if mongodb_replication %}
 replication:
    replSetName: {{ mongodb_replication_set }}
+
+security:
+  keyFile: {{ mongodb_replication_keyfile }}
+{% endif %}

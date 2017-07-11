@@ -3,9 +3,9 @@ db = conn.getDB("admin");
 db.auth( '{{ mongodb_admin_user.name }}', '{{ mongodb_admin_user.password }}');
 
 config = {_id: '{{ mongodb_replication_set }}', members: [
-       {%- for host in groups[mongodb_replication_group -%}
+       {% for host in groups[mongodb_replication_group] %}
        {_id: {{ loop.index }}, host: '{{ host }}:{{ mongodb_port }}'}{% if not loop.last %},{% endif %}
-       {%- endfor -%}
+       {% endfor %}
            ]};
 rs.initiate(config)
 sleep(30000)

@@ -1,0 +1,9 @@
+Author: Nissim Bitan
+Description: Create single node of MariaDB MySQL instance.
+Format: Heat.HOT/1.0
+FullName: rn.tests.opentack.services.DeployMariaDB
+Name: Deploy MariaDB
+Tags:
+- automation
+- heat
+Type: Application

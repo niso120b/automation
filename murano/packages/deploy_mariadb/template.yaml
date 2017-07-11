@@ -1,25 +1,29 @@
 heat_template_version: 2016-10-14
 
 description: >
-  Deploy HTTP apache server in cloud.
+  Deploy MariaDB MySQL in Single Mode.
 
 parameters:
-  server_name:
+  name:
     type: string
     description: Name of the server
+    default: "mariadb0"
   key_name:
     type: string
     description: Name of keypair to assign to server
   image:
     type: string
     description: Name of image to use for server
+    default: "centos7"
   flavor:
     type: string
     description: Flavor to use for server
+    default: "m1.medium"
   public_net_id:
     type: string
     description: >
       ID of public network for which floating IP addresses will be allocated
+    default: "public-net"
   private_net_id:
     type: string
     description: ID of private network into which server get deployed
@@ -31,6 +35,38 @@ parameters:
     description: ID of the security group
 
 resources:
+  mariadb_deps:
+    type: OS::Heat::SoftwareDeploymentGroup
+    properties:
+      config: { get_resource: mariadb_config }
+      servers: {'0': { get_resource: instance }}
+      signal_transport: NO_SIGNAL
+
+  mariadb_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ansible
+      config: |
+        - hosts: localhost
+          connection: local
+          tasks:
+            - name: "Installing MariaDB MySQL"
+              yum:
+                name: "{{ item }}"
+                state: "present"
+              with_items:
+              - mariadb
+              - mariadb-server
+              - mariadb-libs
+              - MySQL-python
+              - perl-DBD-MySQL
+            - name: "Ensuring MariaDB MySQL Is Enabled and Started"
+              service:
+                name: "mariadb"
+                state: "started"
+                enabled: yes
+
+
   instance_port:
     type: OS::Neutron::Port
     properties:
@@ -42,24 +78,15 @@ resources:
   instance:
     type: OS::Nova::Server
     properties:
-      name: { get_param: server_name }
+      name: { get_param: name}
       image: { get_param: image }
       flavor: { get_param: flavor }
       key_name: { get_param: key_name }
       networks:
-        - port: { get_resource: instance1_port }
-      user_data: |
-            #!/bin/sh
-            sudo yum install httpd -y
-            sudo systemctl restart httpd
+        - port: { get_resource: instance_port }
+      user_data_format: SOFTWARE_CONFIG
 
-            for i in 443 80
-              do
-                sudo iptables -I INPUT 1 -p tcp -m tcp --dport $i -j ACCEPT -m comment --comment "by murano, Apache server access on HTTPS port $i"
-            done
-      user_data_format: RAW
-
-  server2_floating_ip:
+  instance_floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network_id: { get_param: public_net_id }

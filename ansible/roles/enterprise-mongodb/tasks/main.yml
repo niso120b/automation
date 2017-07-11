@@ -32,7 +32,7 @@
 
 - name: "Create the hosts file for all machines"
   template:
-    src: "hosts.j2"
+    src: "etc/hosts.j2"
     dest: "/etc/hosts"
 
 - name: "Configuring MongoDB"

@@ -73,7 +73,7 @@
   register: "mongodb_repl_set_init"
   when: >
         inventory_hostname == mongodb_replication_master and
-        not mongodb_replication_set_initialized.stat.exists and
+        not mongodb_replication_set_initialized.stat.exists
 
 - name: "Master - Marking Replication Set As Initialized"
   file:

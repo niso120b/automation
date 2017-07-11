@@ -1,0 +1,116 @@
+heat_template_version: 2016-10-14
+
+description: >
+  Deploy MongoDB in Single Mode.
+
+parameters:
+  name:
+    type: string
+    description: Name of the server
+    default: "mongodb0"
+  key_name:
+    type: string
+    description: Name of keypair to assign to server
+  image:
+    type: string
+    description: Name of image to use for server
+    default: "centos7"
+  flavor:
+    type: string
+    description: Flavor to use for server
+    default: "m1.medium"
+  public_net_id:
+    type: string
+    description: >
+      ID of public network for which floating IP addresses will be allocated
+    default: "public-net"
+  private_net_id:
+    type: string
+    description: ID of private network into which server get deployed
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which server get deployed
+  security_group_id:
+    type: string
+    description: ID of the security group
+
+resources:
+  mongodb_deps:
+    type: OS::Heat::SoftwareDeploymentGroup
+    properties:
+      config: { get_resource: mongodb_config }
+      servers: {'0': { get_resource: instance }}
+      signal_transport: NO_SIGNAL
+
+  mongodb_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ansible
+      config: |
+        - hosts: localhost
+          connection: local
+          vars:
+            mongodb_repo_info:
+              name: 'mongodb-enterprise'
+              description: 'MongoDB Enterprise Repository'
+              baseurl: 'https://repo.mongodb.com/yum/redhat/$releasever/mongodb-enterprise/3.4/x86_64/'
+              gpgcheck: yes
+              enabled: yes
+              gpgkey: 'https://www.mongodb.org/static/pgp/server-3.4.asc'
+          tasks:
+            - name: "Adding MongoDB Repo"
+              yum_repository:
+                name: "{{ mongodb_repo_info.name }}"
+                description: "{{ mongodb_repo_info.description }}"
+                baseurl: "{{ mongodb_repo_info.baseurl }}"
+                gpgcheck: "{{ mongodb_repo_info.gpgcheck }}"
+                enabled: "{{ mongodb_repo_info.enabled }}"
+                gpgkey: "{{ mongodb_repo_info.gpgkey }}"
+                state: "present"
+            - name: "Installing MongoDB"
+              yum:
+                name: "{{ item }}"
+                state: "present"
+              with_items:
+              - python-pip
+              - libselinux-python
+              - mongodb-enterprise
+            - name: "Ensuring MongoDB Is Enabled and Started"
+              service:
+                name: "mongod"
+                state: "started"
+                enabled: yes
+            - name: "Installing Python Modules"
+              pip:
+                name: "pymongo"
+                state: "present"
+
+  instance_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_param: security_group_id }]
+
+  instance:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: name}
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance_port }
+      user_data_format: SOFTWARE_CONFIG
+
+  instance_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: instance_port }
+
+outputs:
+  instance_private_ip:
+    description: IP address of instance in network
+    value: { get_attr: [ instance, first_address ] }

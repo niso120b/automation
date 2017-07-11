@@ -1,5 +1,5 @@
 Author: Nissim Bitan
-Description: Create single node of Apache Httpd instance.
+Description: Create single node of MongoDB instance.
 Format: Heat.HOT/1.0
 FullName: rn.tests.opentack.services.SingleMongoDB
 Name: Deploy Single MongoDB
